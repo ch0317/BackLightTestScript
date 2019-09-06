@@ -19,6 +19,11 @@ class BackLightTest:
 		l = tk.Label(root, textvariable=self.current_cmd, bg='green', fg='white', font=('Arial', 12), width=40, height=2)
 		self.current_cmd.set('回车将设置2D电流 5ma， 3D电流 28ma')
 		l.pack()
+		
+		self.sended_cmd = tk.StringVar()
+		l = tk.Label(root, textvariable=self.sended_cmd, bg='blue', fg='white', font=('Arial', 12), width=40, height=2)
+		self.sended_cmd.set('未发送命令')
+		l.pack()
 
 		self.CheckVar1 = tk.IntVar()
 		C1 = tk.Checkbutton(root, text = "打印开关", variable = self.CheckVar1, \
@@ -88,49 +93,58 @@ class BackLightTest:
 		self.S.write("DUMP\r\n".encode())
 		print("[TEST]:DUMP寄存器")
 		j = self.recv()
-		print(j)
+		#print(j)
 		chip0_list = j['8556 chipid 0']
 		chip1_list = j['8556 chipid 1']
 		list0_exp = [{'address': 0xa1, 'val': 0x5F}, {'address': 0xa0, 'val': 0xff}, \
-		{'address': 0x16, 'val': 0x16}, {'address': 0xa9, 'val': 0x40}, \
+		{'address': 0x16, 'val': 0x3f}, {'address': 0xa9, 'val': 0x60}, \
 		{'address': 0x9e, 'val': 0x22}, {'address': 0xa2, 'val': 0x2b}, \
 		{'address': 0xa6, 'val': 0x05}, {'address': 0x01, 'val': 0x05}, \
 		{'address': 0x1f, 'val': 0xff}]
 		list1_exp = [{'address': 0xa1, 'val': 0x5F}, {'address': 0xa0, 'val': 0xff}, \
-		{'address': 0x16, 'val': 0x16}, {'address': 0xa9, 'val': 0x60}, \
+		{'address': 0x16, 'val': 0x3f}, {'address': 0xa9, 'val': 0x40}, \
 		{'address': 0x9e, 'val': 0x22}, {'address': 0xa2, 'val': 0x2b}, \
 		{'address': 0xa6, 'val': 0x05}, {'address': 0x01, 'val': 0x05}, \
 		{'address': 0x1f, 'val': 0xff}]
-		if chip0_list == list0_exp and chip1_list == list1_exp:
-			print('pass')
-		else:
-			print('fail')
-			print('chip 0')
-			for p in chip0_list:
-				print(p)
-			print('chip 1')
-			for p in chip1_list:
-				print(p)
 
+		count = 0
+		for p in chip0_list:
+			for q in list0_exp:
+				if p['address'] == q['address']:
+					if p['val'] != q['val']:
+						print("%x,exp:%x,read:%x failed" % (p['address'], q['val'], p['val']))
+						count += 1
+		if count == 0:
+			print('chip 0 success')
+			
+		count = 0
+		for p in chip1_list:
+			for q in list1_exp:
+				if p['address'] == q['address']:
+					if p['val'] != q['val']:
+						print("%x,exp:%x,read:%x failed" % (p['address'], q['val'], p['val']))
+						count += 1
+		if count == 0:
+			print('chip 1 success')
 
 	def test_I2C(self):
 		print('[TEST]:I2C读写寄存器')
-		self.S.write("I2CREAD 0\r\n".encode())
+		'''self.S.write("I2CREAD 0\r\n".encode())
 		j = self.recv()
-		print(j)
+		#print(j)
 		if j['result'] == 'success' and j['8556 chipid 0']['0x0'] == '0x0':
-			print('pass')
+			print('0x0 success')
 		else:
-			print('fail')
+			print('0x0 fail')
 
 		self.S.write("I2CREAD 2\r\n".encode())
 		j = self.recv()
-		print(j)
+		#print(j)
 
 		if j['result'] == 'success' and j['8556 chipid 0']['0x2'] == '0x0':
 			print('pass')
 		else:
-			print('fail')
+			print('fail')'''
 
 		self.S.write("I2CWRITE 0 1f\r\n".encode())
 		j = self.recv()
@@ -138,9 +152,9 @@ class BackLightTest:
 		j = self.recv()
 
 		if j['result'] == 'success' and j['8556 chipid 0']['0x0'] == '0x1f':
-			print('pass')
+			print('0x0 pass')
 		else:
-			print('fail')
+			print('0x0 fail')
 
 		self.S.write("I2CWRITE AF FF\r\n".encode())
 		j = self.recv()
@@ -148,9 +162,9 @@ class BackLightTest:
 		j = self.recv()
 
 		if j['result'] == 'success' and j['8556 chipid 0']['0xaf'] == '0xff':
-			print('pass')
+			print('0xaf pass')
 		else:
-			print('fail')
+			print('0xaf fail')
 
 
 	def test_BLSETTINGSGET(self):
@@ -158,7 +172,7 @@ class BackLightTest:
 		self.S.write("BLSETTINGSGET\r\n".encode())
 		j = self.recv()
 		self.check_json_ret(j)
-		print(j)
+		#print(j)
 
 	def get_brightness(self):
 		self.S.write("BLSETTINGSGET\r\n".encode())
@@ -174,7 +188,7 @@ class BackLightTest:
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(1)
+			sleep(2)
 			
 			if self.get_brightness() == brightness:
 				print("brightness " + str(brightness) + ' success')
@@ -239,29 +253,29 @@ class BackLightTest:
 		"BLSETTINGSGET\r\n",
 
 		"BLSWITCH 3\r\n",
-		"BLSETRATIOS 2 0.1 1\r\n",
+		"BLSETRATIOS 3 0.1 1\r\n",
 		"BLSETBRIGHTNESS 255\r\n",
 		"BLSETTINGSGET\r\n",
 
 		"BLSWITCH 3\r\n",
-		"BLSETRATIOS 2 0.1 1\r\n",
+		"BLSETRATIOS 3 0.1 1\r\n",
 		"BLSETBRIGHTNESS 50\r\n",
 		"BLSETTINGSGET\r\n",
 
 		"BLSWITCH 3\r\n",
-		"BLSETRATIOS 2 0 0.5\r\n",
+		"BLSETRATIOS 3 0 0.5\r\n",
 		"BLSETBRIGHTNESS 255\r\n",
 		"BLSETTINGSGET\r\n",
 
 		"BLSWITCH 3\r\n",
-		"BLSETRATIOS 2 0 0.5\r\n",
+		"BLSETRATIOS 3 0 0.5\r\n",
 		"BLSETBRIGHTNESS 50\r\n",
 		"BLSETTINGSGET\r\n"]
 		for cmd in cmd_list:
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(1)
+			sleep(1.5)
 
 
 	def test_SET2DCTRLMODE(self):
@@ -344,7 +358,15 @@ class BackLightTest:
 发送命令：BLSETTINGSGET\r\n
 		'''
 		self.S.write("BLFACTORYRESET\r\n".encode())
-		#j = self.recv()
+		sleep(3)
+		line = []
+		data = ''
+		while True:
+			cc = self.S.readline().decode()
+			print(cc)
+			if len(cc) == 0:
+				break 
+			data += cc
 		#self.check_json_ret(j)
 
 	def callBack(self, event):
@@ -359,7 +381,7 @@ class BackLightTest:
 		self.S.write(cmd_3d.encode())
 		j = self.recv()
 		self.check_json_ret(j)
-
+		self.sended_cmd.set("已发送命令设置2D电流 %dma， 3D电流 %dma" % (current_list[self.enter_counter][0], current_list[self.enter_counter][1]))
 		self.enter_counter += 1
 		if self.enter_counter == 3:
 			self.enter_counter = 0
@@ -368,7 +390,7 @@ class BackLightTest:
 	def BackLightSerial(self):
 		plist = list(serial.tools.list_ports.comports())
 		serialName = []
-		if len(plist) <= 1:
+		if len(plist) < 1:
 			print ("The Serial port can't find!")
 			self.var.set("串口连接失败")
 		else:
