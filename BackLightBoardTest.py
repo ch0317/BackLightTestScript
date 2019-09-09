@@ -3,7 +3,7 @@ import serial
 import serial.tools.list_ports
 import json
 from time import sleep
-
+import threading
 
 class BackLightTest:
 	def __init__(self):
@@ -31,6 +31,12 @@ class BackLightTest:
 		width = 10)
 		C1.pack()
 
+		self.CheckVar2 = tk.IntVar()
+		C2 = tk.Checkbutton(root, text = "循环测试开关", variable = self.CheckVar2, \
+		onvalue = 1, offvalue = 0, height=1, \
+		width = 10)
+		C2.pack()
+
 		#self.print_switch = True
 
 		#panel = tk.Label(root, text = '1')
@@ -51,6 +57,7 @@ class BackLightTest:
 		button12 = tk.Button(root, text= '设置3D电流值', width="20",height="1", command=self.test_BLSET3DCURRENT)
 		button13 = tk.Button(root, text= '断电保存配置到flash', width="20",height="1", command=self.test_SAVETOFLASH)
 		button14 = tk.Button(root, text= '恢复出厂设置', width="20",height="1", command=self.test_BLFACTORYRESET)
+		button15 = tk.Button(root, text= '循环测试', width="20",height="1", command=self.cycle_test)
 		#canvas1.create_window(40, 40, window=button2)
 		button1.pack()
 		button2.pack()
@@ -66,6 +73,7 @@ class BackLightTest:
 		button12.pack()
 		button13.pack()
 		button14.pack()
+		button15.pack()
 
 		frame=tk.Frame(root,width=20,height=20)
 
@@ -428,10 +436,25 @@ class BackLightTest:
 		else:
 			print(j['CMD'] + ' fail')
 
+	def methods(self):
+		return(list(filter(lambda m: not m.startswith("__") and not m.endswith("__") and m.startswith("test_") and callable(getattr(self, m)), dir(self))))
+
+	def cycle_test(self):
+		func_list = self.methods()
+
+		while True:
+			for func in func_list:
+				f = getattr(self, func, None)
+				if self.CheckVar2.get():
+					f()
+				else:
+					break
+			if not self.CheckVar2.get():
+				break
+
 def main():
 
 	backtest = BackLightTest()
 	backtest.BackLightSerial()
-
 
 main()
