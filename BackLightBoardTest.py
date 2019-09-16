@@ -31,11 +31,6 @@ class BackLightTest:
 		width = 10)
 		C1.pack()
 
-		self.CheckVar2 = tk.IntVar()
-		C2 = tk.Checkbutton(root, text = "循环测试开关", variable = self.CheckVar2, \
-		onvalue = 1, offvalue = 0, height=1, \
-		width = 10)
-		C2.pack()
 
 		#self.print_switch = True
 
@@ -304,7 +299,7 @@ class BackLightTest:
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(1)
+			sleep(2)
 
 	def test_BLSETPWM(self):
 		print("[TEST]:设置2D、3D PWM占空比")
@@ -321,7 +316,7 @@ class BackLightTest:
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(1)
+			sleep(1.5)
 
 	def test_BLSET2DCURRENT(self):
 		print("[TEST]:设置2D电流值")
@@ -332,7 +327,7 @@ class BackLightTest:
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(1)
+			sleep(1.5)
 
 	def test_BLSET3DCURRENT(self):
 		print("[TEST]:设置3D电流值")
@@ -343,7 +338,7 @@ class BackLightTest:
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(1)
+			sleep(1.5)
 		print("test_3")
 
 	def test_SAVETOFLASH(self):
@@ -445,12 +440,8 @@ class BackLightTest:
 		while True:
 			for func in func_list:
 				f = getattr(self, func, None)
-				if self.CheckVar2.get():
-					f()
-				else:
-					break
-			if not self.CheckVar2.get():
-				break
+				f()
+
 
 def main():
 
