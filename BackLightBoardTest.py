@@ -332,8 +332,8 @@ class BackLightTest:
 	def test_BLSET3DCURRENT(self):
 		print("[TEST]:设置3D电流值")
 		cmd_list = ["BLSET2DCURRENT 0\r\n",
-		"BLSET2DCURRENT 30.0\r\n",
-		"BLSET2DCURRENT 10\r\n"]
+		"BLSET3DCURRENT 30.0\r\n",
+		"BLSET3DCURRENT 10\r\n"]
 		for cmd in cmd_list:
 			self.S.write(cmd.encode())
 			j = self.recv()
