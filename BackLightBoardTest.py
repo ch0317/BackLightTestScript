@@ -53,6 +53,7 @@ class BackLightTest:
 		button13 = tk.Button(root, text= '断电保存配置到flash', width="20",height="1", command=self.test_SAVETOFLASH)
 		button14 = tk.Button(root, text= '恢复出厂设置', width="20",height="1", command=self.test_BLFACTORYRESET)
 		button15 = tk.Button(root, text= '循环测试', width="20",height="1", command=self.cycle_test)
+		button16 = tk.Button(root, text= '容错测试', width="20",height="1", command=self.error_tolerance)
 		#canvas1.create_window(40, 40, window=button2)
 		button1.pack()
 		button2.pack()
@@ -69,6 +70,7 @@ class BackLightTest:
 		button13.pack()
 		button14.pack()
 		button15.pack()
+		button16.pack()
 
 		frame=tk.Frame(root,width=20,height=20)
 
@@ -275,6 +277,7 @@ class BackLightTest:
 		"BLSETBRIGHTNESS 50\r\n",
 		"BLSETTINGSGET\r\n"]
 		for cmd in cmd_list:
+			print("测试命令：%s" % cmd)
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
@@ -296,6 +299,7 @@ class BackLightTest:
 		"BLSETTINGSGET\r\n"]
 		
 		for cmd in cmd_list:
+			print("测试命令：%s" % cmd)
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
@@ -313,6 +317,7 @@ class BackLightTest:
 
 		"BLSETPWM 3 2400\r\n"]
 		for cmd in cmd_list:
+			print("测试命令：%s" % cmd)
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
@@ -324,6 +329,7 @@ class BackLightTest:
 		"BLSET2DCURRENT 25.0\r\n",
 		"BLSET2DCURRENT 10\r\n"]
 		for cmd in cmd_list:
+			print("测试命令：%s" % cmd)
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
@@ -335,6 +341,7 @@ class BackLightTest:
 		"BLSET2DCURRENT 30.0\r\n",
 		"BLSET2DCURRENT 10\r\n"]
 		for cmd in cmd_list:
+			print("测试命令：%s" % cmd)
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
@@ -371,6 +378,75 @@ class BackLightTest:
 				break 
 			data += cc
 		#self.check_json_ret(j)
+
+	def error_tolerance(self):
+		print("[TEST]:容错测试")
+		cmd_list = ["！@#%……%\r\n",
+		"HELP",
+		"INFO\r\n",
+		"HELPXYZ\r\n",
+
+		"help\r\n",
+		"\r\n",
+		"BLSETBRIGHTNESS  xy\r\n",
+		"BLSETRATIOS xy\r\n",
+
+		"I2CREAD xy\r\n",
+		"BLSETRATIOS xy x x\r\n",
+		"BLSWITCH xy\r\n",
+		"SET2DCTRLMODE xy\r\n",
+
+		"BLSETPWM xy x\r\n",
+		"BLSET2DCURRENT xy\r\n",
+		"BLSET3DCURRENT yzr\r\n",
+		"SET2DCTRLMODE x\r\n",
+
+		"INFO\r\nHELP\r\nBLSETBRIGHTNESS 50\r\n",
+		"BLSETBRIGHTNESSBLSETBRIGHTNESSBLSETBRIGHTNESSIGHTNESSBLSETBRIGHTNESSIGHTNESSBLSETBRIGHTNESSIGHTNESSBLSETBRIGHTNESSIGHTNESSIGHTNESSIGHTNESSIGHTNESSIGHTNESSIGHTNESSIGHTNESSIGHTNESSIGHTNESSIGHTNESS  ",
+		"I2CREAD  1ff\r\n",
+		"I2CWRITE 01 1ff\r\n",
+
+		"BLSETBRIGHTNESS  256\r\n",
+		"BLSETRATIOS 2 2 0\r\n",
+		"BLSETRATIOS 1 1 0\r\n",
+		"BLSETRATIOS 2 1 4\r\n",
+
+		"BLSWITCH 4\r\n",
+		"BLSWITCH 1\r\n",
+		"SET2DCTRLMODE 2\r\n",
+		"BLSETPWM 2 10000\r\n",
+
+		"BLSET2DCURRENT 25.01\r\n",
+		"BLSET3DCURRENT 30.01\r\n",
+		"HELP 1\r\n",
+		"INFO 1\r\n",
+		"DUMP 1\r\n",
+		"I2CREAD 1 1\r\n",
+		"I2CWRITE 1\r\n",
+		"BLSETBRIGHTNESS\r\n",
+		"BLSETBRIGHTNESS 255 255\r\n",
+		"BLSETRATIOS 2 1\r\n",
+		"BLSETRATIOS 2 1 2 2\r\n",
+		"BLSWITCH\r\n",
+		"BLSWITCH 2 2\r\n",
+		"SET2DCTRLMODE\r\n",
+		"SET2DCTRLMODE 1 1\r\n",
+		"BLSETPWM\r\n",
+		"BLSETPWM 2 1111 1111\r\n",
+		"BLSET2DCURRENT\r\n",
+		"BLSET2DCURRENT 1 1\r\n",
+		"BLSET3DCURRENT\r\n",
+		"BLSET3DCURRENT 1 1\r\n",
+		"BLSETTINGSGET 11\r\n",
+		"BLFACTORYRESET 11\r\n"
+		]
+
+		for cmd in cmd_list:
+			print("容错测试命令：%s" % cmd)
+			self.S.write(cmd.encode())
+			j = self.recv()
+			#self.check_json_ret(j)
+			sleep(0.05)
 
 	def callBack(self, event):
 		print(event.keysym)
@@ -417,10 +493,13 @@ class BackLightTest:
 			data += cc
 		if self.CheckVar1.get():
 			print (data)
-		text = json.loads(data)
-		if self.CheckVar1.get():
-			print (text)
-		return text
+		if data:
+			text = json.loads(data)
+			if self.CheckVar1.get():
+				print (text)
+			return text
+		else:
+			print("DATA NONE")
 
 		#print (text['result'])		
 
