@@ -50,10 +50,12 @@ class BackLightTest:
 		button10 = tk.Button(root, text= '设置2D、3D PWM占空比', width="20",height="1", command=self.test_BLSETPWM)
 		button11 = tk.Button(root, text= '设置2D电流值', width="20",height="1", command=self.test_BLSET2DCURRENT)
 		button12 = tk.Button(root, text= '设置3D电流值', width="20",height="1", command=self.test_BLSET3DCURRENT)
-		button13 = tk.Button(root, text= '断电保存配置到flash', width="20",height="1", command=self.test_SAVETOFLASH)
-		button14 = tk.Button(root, text= '恢复出厂设置', width="20",height="1", command=self.test_BLFACTORYRESET)
-		button15 = tk.Button(root, text= '循环测试', width="20",height="1", command=self.cycle_test)
-		button16 = tk.Button(root, text= '容错测试', width="20",height="1", command=self.error_tolerance)
+		button13 = tk.Button(root, text= '读取flash config', width="20",height="1", command=self.test_getDisplayConfig)
+		button14 = tk.Button(root, text= '写入flash config', width="20",height="1", command=self.test_setDisplayConfig)
+		button15 = tk.Button(root, text= '断电保存配置到flash', width="20",height="1", command=self.test_SAVETOFLASH)
+		button16 = tk.Button(root, text= '恢复出厂设置', width="20",height="1", command=self.test_BLFACTORYRESET)
+		button17 = tk.Button(root, text= '循环测试', width="20",height="1", command=self.cycle_test)
+		button18 = tk.Button(root, text= '容错测试', width="20",height="1", command=self.error_tolerance)
 		#canvas1.create_window(40, 40, window=button2)
 		button1.pack()
 		button2.pack()
@@ -71,6 +73,8 @@ class BackLightTest:
 		button14.pack()
 		button15.pack()
 		button16.pack()
+		button17.pack()
+		button18.pack()
 
 		frame=tk.Frame(root,width=20,height=20)
 
@@ -228,12 +232,12 @@ class BackLightTest:
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(1)
+			sleep(2)
 			cmd = "BLSWITCH 3\r\n"
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(1)
+			sleep(2)
 
 	def test_BLSETRATIOS(self):
 		print("[TEST]:切换2D、3D亮度比率")
@@ -281,7 +285,7 @@ class BackLightTest:
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(1.5)
+			sleep(2)
 
 
 	def test_SET2DCTRLMODE(self):
@@ -321,7 +325,7 @@ class BackLightTest:
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(1.5)
+			sleep(2)
 
 	def test_BLSET2DCURRENT(self):
 		print("[TEST]:设置2D电流值")
@@ -333,7 +337,7 @@ class BackLightTest:
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(1.5)
+			sleep(2)
 
 	def test_BLSET3DCURRENT(self):
 		print("[TEST]:设置3D电流值")
@@ -345,7 +349,7 @@ class BackLightTest:
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(1.5)
+			sleep(2)
 		print("test_3")
 
 	def test_SAVETOFLASH(self):
@@ -447,6 +451,34 @@ class BackLightTest:
 			j = self.recv()
 			#self.check_json_ret(j)
 			sleep(0.05)
+
+	def test_getDisplayConfig(self):
+		print("[TEST]:config 保存到flash")
+		cmd_list = [
+		"getDisplayConfig\r\n",
+		"getDisplayConfig DisplayClass\r\n",
+		"getDisplayConfig ActCoefficientsY\r\n"]
+		"getDisplayConfig ViewBoxSize \r\n",	
+		for cmd in cmd_list:
+			print("测试命令：%s" % cmd)
+			self.S.write(cmd.encode())
+			j = self.recv()
+			self.check_json_ret(j)
+			sleep(0.5)
+
+	def test_setDisplayConfig(self):
+		print("[TEST]:写入config到flash")
+		cmd_list = [
+		"setDisplayConfig DisplayClass B2\r\n",
+		"setDisplayConfig ActCoefficientsY [0,0,0,0,0,0,0,0,0]\r\n",
+		"setDisplayConfig ViewBoxSize [25,1]\r\n"]
+		
+		for cmd in cmd_list:
+			print("测试命令：%s" % cmd)
+			self.S.write(cmd.encode())
+			j = self.recv()
+			self.check_json_ret(j)
+			sleep(0.5)
 
 	def callBack(self, event):
 		print(event.keysym)
