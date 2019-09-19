@@ -57,6 +57,7 @@ class BackLightTest:
 		button17 = tk.Button(root, text= '循环测试', width="20",height="1", command=self.cycle_test)
 		button18 = tk.Button(root, text= '容错测试', width="20",height="1", command=self.error_tolerance)
 		button19 = tk.Button(root, text= '工厂贴片测试', width="20",height="1", command=self.test_basictest)
+		button20 = tk.Button(root, text= '极限寿命测试', width="20",height="1", command=self.test_limitation)
 		#canvas1.create_window(40, 40, window=button2)
 		button1.pack()
 		button2.pack()
@@ -77,6 +78,7 @@ class BackLightTest:
 		button17.pack()
 		button18.pack()
 		button19.pack()
+		button20.pack()
 
 		frame=tk.Frame(root,width=20,height=20)
 
@@ -627,6 +629,18 @@ class BackLightTest:
 			sleep(2)
 
 		self.test_BLFACTORYRESET()
+		
+	def test_limitation(self):
+		cmd_list = [
+		"BLSETRATIOS 2 1 1\r\n",
+		"BLSETBRIGHTNESS 255\r\n"]
+		
+		for cmd in cmd_list:
+			print("命令：%s" % cmd)
+			self.S.write(cmd.encode())
+			j = self.recv()
+			self.check_json_ret(j)
+			sleep(0.05)
 
 	def callBack(self, event):
 		print(event.keysym)
