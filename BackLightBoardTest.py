@@ -21,7 +21,7 @@ class BackLightTest:
 		l.pack()
 		
 		self.sended_cmd = tk.StringVar()
-		l = tk.Label(root, textvariable=self.sended_cmd, bg='blue', fg='white', font=('Arial', 12), width=40, height=2)
+		l = tk.Label(root, textvariable=self.sended_cmd, bg='blue', fg='white', font=('Arial', 8), width=40, height=1)
 		self.sended_cmd.set('未发送命令')
 		l.pack()
 
@@ -56,6 +56,7 @@ class BackLightTest:
 		button16 = tk.Button(root, text= '恢复出厂设置', width="20",height="1", command=self.test_BLFACTORYRESET)
 		button17 = tk.Button(root, text= '循环测试', width="20",height="1", command=self.cycle_test)
 		button18 = tk.Button(root, text= '容错测试', width="20",height="1", command=self.error_tolerance)
+		button19 = tk.Button(root, text= '工厂贴片测试', width="20",height="1", command=self.test_basictest)
 		#canvas1.create_window(40, 40, window=button2)
 		button1.pack()
 		button2.pack()
@@ -75,6 +76,7 @@ class BackLightTest:
 		button16.pack()
 		button17.pack()
 		button18.pack()
+		button19.pack()
 
 		frame=tk.Frame(root,width=20,height=20)
 
@@ -85,6 +87,8 @@ class BackLightTest:
 		frame.focus_set()
 
 		self.enter_counter = 0
+		
+		self.sleep_time = 4
 
 	def test_HELP(self):
 		self.S.write("HELP\r\n".encode())
@@ -164,6 +168,8 @@ class BackLightTest:
 			print('0x0 pass')
 		else:
 			print('0x0 fail')
+			
+		sleep(self.sleep_time)
 
 		self.S.write("I2CWRITE AF FF\r\n".encode())
 		j = self.recv()
@@ -190,14 +196,19 @@ class BackLightTest:
 
 	def test_BLSETBRIGHTNESS(self):
 		print("[TEST]:亮度设置")
-		brightness_list = [0, 50, 100, 200, 255, 50]
+		brightness_list = [0, 50, 100, 200, 255, 102]
 
 		for brightness in brightness_list:
 			cmd = "BLSETBRIGHTNESS " + str(brightness) + "\r\n"
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(2)
+			if brightness == 255:
+				for i in range(self.sleep_time * 3):
+					print("[" + i * "-" + (self.sleep_time * 3 - i) * " " + "]")
+					sleep(1)
+			else:
+				sleep(self.sleep_time)
 			
 			if self.get_brightness() == brightness:
 				print("brightness " + str(brightness) + ' success')
@@ -216,6 +227,8 @@ class BackLightTest:
 		if(j['mode'] != 3):
 			print("BLSWITCH fail")
 
+		sleep(self.sleep_time)
+
 		cmd = "BLSWITCH 2\r\n"
 		self.S.write(cmd.encode())
 		j = self.recv()
@@ -226,28 +239,34 @@ class BackLightTest:
 		j = self.recv()
 		if(j['mode'] != 2):
 			print("BLSWITCH fail")
+			
+		sleep(self.sleep_time)
 
 		for i in range(3):
 			cmd = "BLSWITCH 2\r\n"
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(2)
+			sleep(self.sleep_time)
 			cmd = "BLSWITCH 3\r\n"
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(2)
+			sleep(self.sleep_time)
+			
+		cmd = "BLSWITCH 2\r\n"
+		self.S.write(cmd.encode())
+		j = self.recv()
+		self.check_json_ret(j)
 
 	def test_BLSETRATIOS(self):
 		print("[TEST]:切换2D、3D亮度比率")
 		cmd_list = ["BLSWITCH 2\r\n",
-		"BLSETRATIOS 2 0.5 0.3\r\n",
 		"BLSETBRIGHTNESS 255\r\n",
+		"BLSETRATIOS 2 0.5 0.3\r\n",
 		"BLSETTINGSGET\r\n",
 
 		"BLSWITCH 2\r\n",
-		"BLSETRATIOS 2 0.5 0.3\r\n",
 		"BLSETBRIGHTNESS 50\r\n",
 		"BLSETTINGSGET\r\n",
 
@@ -257,17 +276,15 @@ class BackLightTest:
 		"BLSETTINGSGET\r\n",
 
 		"BLSWITCH 2\r\n",
-		"BLSETRATIOS 2 1 0\r\n",
 		"BLSETBRIGHTNESS 50\r\n",
 		"BLSETTINGSGET\r\n",
 
 		"BLSWITCH 3\r\n",
-		"BLSETRATIOS 3 0.1 1\r\n",
+		"BLSETRATIOS 3 1 1\r\n",
 		"BLSETBRIGHTNESS 255\r\n",
 		"BLSETTINGSGET\r\n",
 
 		"BLSWITCH 3\r\n",
-		"BLSETRATIOS 3 0.1 1\r\n",
 		"BLSETBRIGHTNESS 50\r\n",
 		"BLSETTINGSGET\r\n",
 
@@ -277,7 +294,6 @@ class BackLightTest:
 		"BLSETTINGSGET\r\n",
 
 		"BLSWITCH 3\r\n",
-		"BLSETRATIOS 3 0 0.5\r\n",
 		"BLSETBRIGHTNESS 50\r\n",
 		"BLSETTINGSGET\r\n"]
 		for cmd in cmd_list:
@@ -285,7 +301,9 @@ class BackLightTest:
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(2)
+			sleep(self.sleep_time)
+			
+		self.test_BLFACTORYRESET()
 
 
 	def test_SET2DCTRLMODE(self):
@@ -307,7 +325,7 @@ class BackLightTest:
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(2)
+			sleep(self.sleep_time)
 
 	def test_BLSETPWM(self):
 		print("[TEST]:设置2D、3D PWM占空比")
@@ -325,7 +343,7 @@ class BackLightTest:
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(2)
+			sleep(self.sleep_time)
 
 	def test_BLSET2DCURRENT(self):
 		print("[TEST]:设置2D电流值")
@@ -337,11 +355,11 @@ class BackLightTest:
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(2)
+			sleep(self.sleep_time)
 
 	def test_BLSET3DCURRENT(self):
 		print("[TEST]:设置3D电流值")
-		cmd_list = ["BLSET2DCURRENT 0\r\n",
+		cmd_list = ["BLSET3DCURRENT 0\r\n",
 		"BLSET3DCURRENT 30.0\r\n",
 		"BLSET3DCURRENT 10\r\n"]
 		for cmd in cmd_list:
@@ -349,22 +367,35 @@ class BackLightTest:
 			self.S.write(cmd.encode())
 			j = self.recv()
 			self.check_json_ret(j)
-			sleep(2)
+			sleep(self.sleep_time)
 		print("test_3")
 
 	def test_SAVETOFLASH(self):
+		'''
+		发送命令：BLSETBRIGHTNESS 50\r\n
+		发送命令：BLSWITCH 3\r\n
+		发送命令：BLSETRATIOS 2 1 0\r\n
+
+		发送命令：SET2DCTRLMODE 1\r\n
+		插拔电源
+		'''
 		print("[TEST]:断电保存配置到flash")
-		'''
-发送命令：BLSETBRIGHTNESS 50\r\n
-插拔电源
-发送命令：BLSWITCH 3\r\n
-插拔电源
-发送命令：BLSETRATIOS 2 1 0\r\n
-插拔电源
-发送命令：SET2DCTRLMODE 1\r\n
-插拔电源
-		'''
-		pass
+		cmd_list = ["BLSETBRIGHTNESS 50\r\n",
+		"BLSWITCH 3\r\n",
+
+		"SET2DCTRLMODE 1\r\n",
+		"BLSETRATIOS 2 1 0\r\n",
+
+		"SET2DCTRLMODE 1\r\n"]
+		for cmd in cmd_list:
+			print("命令：%s" % cmd)
+			self.S.write(cmd.encode())
+			j = self.recv()
+			self.check_json_ret(j)
+			sleep(0.05)
+			
+		print("请插拔电源.")
+
 	def test_BLFACTORYRESET(self):
 		print("[TEST]:恢复出厂设置")
 		'''
@@ -453,51 +484,173 @@ class BackLightTest:
 			sleep(0.05)
 
 	def test_getDisplayConfig(self):
+		self.test_BLFACTORYRESET()
 		print("[TEST]:config 保存到flash")
-		cmd_list = [
-		"getDisplayConfig\r\n",
-		"getDisplayConfig DisplayClass\r\n",
-		"getDisplayConfig ActCoefficientsY\r\n"]
-		"getDisplayConfig ViewBoxSize \r\n",	
-		for cmd in cmd_list:
-			print("测试命令：%s" % cmd)
-			self.S.write(cmd.encode())
-			j = self.recv()
-			self.check_json_ret(j)
-			sleep(0.5)
+		cmd = "getDisplayConfig\r\n"
+		self.S.write(cmd.encode())
+		j = self.recv()
+		
+		if j['DisplayClass'] == "A0":
+			print(j['DisplayClass'] + ' = ' + "A0 success")
+		else:
+			print('getDisplayConfig DisplayClass fail.')
+		
+		sleep(self.sleep_time / 2)
+		
+		cmd = "getDisplayConfig DisplayClass\r\n"
+		self.S.write(cmd.encode())
+		j = self.recv()
+		
+		if j['DisplayClass'] == "A0":
+			print(j['DisplayClass'] + ' = ' + "A0 success")
+		else:
+			print('getDisplayConfig DisplayClass fail.')
+			
+		cmd = "getDisplayConfig ActCoefficientsY\r\n"
+		self.S.write(cmd.encode())
+		j = self.recv()
+		
+		if j['ActCoefficientsY'] == "[0.10000000149011612,0.0700000002902323,0.0,0.0,0.0,0.0,0.0,0.0,0.0]":
+			print(j['ActCoefficientsY'] + ' = ' + "[0.10000000149011612,0.0700000002902323,0.0,0.0,0.0,0.0,0.0,0.0,0.0] success")
+		else:
+			print('getDisplayConfig ActCoefficientsY fail.')
+			
+		cmd = "getDisplayConfig ViewBoxSize \r\n"	
+		
+		self.S.write(cmd.encode())
+		j = self.recv()
+		if j['ViewBoxSize'] == "[24.6,-1]":
+			print(j['ViewBoxSize'] + ' = ' + "[24.6,-1] success")
+		else:
+			print('getDisplayConfig ViewBoxSize fail.')
+		sleep(self.sleep_time / 2)
 
 	def test_setDisplayConfig(self):
+		self.test_BLFACTORYRESET()
 		print("[TEST]:写入config到flash")
-		cmd_list = [
-		"setDisplayConfig DisplayClass B2\r\n",
-		"setDisplayConfig ActCoefficientsY [0,0,0,0,0,0,0,0,0]\r\n",
-		"setDisplayConfig ViewBoxSize [25,1]\r\n"]
 		
-		for cmd in cmd_list:
-			print("测试命令：%s" % cmd)
-			self.S.write(cmd.encode())
-			j = self.recv()
-			self.check_json_ret(j)
-			sleep(0.5)
+		cmd = "setDisplayConfig DisplayClass B2\r\n"
+		print("测试命令：%s" % cmd)
+		self.S.write(cmd.encode())
+		j = self.recv()
+		self.check_json_ret(j)
+		sleep(0.5)
+		
+		cmd = "getDisplayConfig DisplayClass\r\n"
+		self.S.write(cmd.encode())
+		j = self.recv()
+		
+		if j['DisplayClass'] == "B2":
+			print(j['DisplayClass'] + ' = ' + "B2 success")
+		else:
+			print('getDisplayConfig DisplayClass fail.')
+			
+		cmd = "getDisplayConfig ActCoefficientsY\r\n"
+		self.S.write(cmd.encode())
+		j = self.recv()
+		sleep(0.5)
+		
+		cmd = "setDisplayConfig ActCoefficientsY [0,0,0,0,0,0,0,0,0]\r\n"
+		print("测试命令：%s" % cmd)
+		self.S.write(cmd.encode())
+		j = self.recv()
+		self.check_json_ret(j)
+		sleep(0.5)
+		
+		cmd = "getDisplayConfig ActCoefficientsY\r\n"
+		self.S.write(cmd.encode())
+		j = self.recv()
+		if j['ActCoefficientsY'] == "[0,0,0,0,0,0,0,0,0]":
+			print(j['ActCoefficientsY'] + ' = ' + "[0,0,0,0,0,0,0,0,0] success")
+		else:
+			print('getDisplayConfig ActCoefficientsY fail.')
+			
+		cmd = "getDisplayConfig ViewBoxSize \r\n"	
+		
+		self.S.write(cmd.encode())
+		j = self.recv()
+		if j['ViewBoxSize'] == "[24.6,-1]":
+			print(j['ViewBoxSize'] + ' = ' + "[24.6,-1] success")
+		else:
+			print('getDisplayConfig ViewBoxSize fail.')
+		sleep(self.sleep_time / 2)
+		
+		cmd = "setDisplayConfig ViewBoxSize [25,1]\r\n"
+		print("测试命令：%s" % cmd)
+		self.S.write(cmd.encode())
+		j = self.recv()
+		self.check_json_ret(j)
+		sleep(0.5)
+		
+		cmd = "getDisplayConfig ViewBoxSize \r\n"	
+		
+		self.S.write(cmd.encode())
+		j = self.recv()
+		if j['ViewBoxSize'] == "[25,1]":
+			print(j['ViewBoxSize'] + ' = ' + "[25,1] success")
+		else:
+			print('getDisplayConfig ViewBoxSize fail.')
+		sleep(self.sleep_time / 2)
+		
+		self.test_BLFACTORYRESET()
+			
+	def test_basictest(self):
+		print("[TEST]:工厂贴片测试")
+		cmd = "BLSETRATIOS 2 1 1\r\n"
+		self.S.write(cmd.encode())
+		j = self.recv()
+		self.check_json_ret(j)	
+		sleep(0.5)
+		
+		cmd = "BLSETBRIGHTNESS 0\r\n"
+		self.S.write(cmd.encode())
+		j = self.recv()
+		self.check_json_ret(j)	
+		sleep(1)
+		
+		cmd = "BLSETBRIGHTNESS 100\r\n"
+		self.S.write(cmd.encode())
+		j = self.recv()
+		self.check_json_ret(j)
+		sleep(1)
+		cmd = "BLSETBRIGHTNESS 200\r\n"
+		self.S.write(cmd.encode())
+		j = self.recv()
+		self.check_json_ret(j)
+		sleep(1)
+		cmd = "BLSETBRIGHTNESS 255\r\n"
+		self.S.write(cmd.encode())
+		j = self.recv()
+		self.check_json_ret(j)
+		for i in range(30):
+			print("[" + i * "-" + (58 - 2*i) * " " + i * "-" + "]")
+			sleep(2)
+
+		self.test_BLFACTORYRESET()
 
 	def callBack(self, event):
 		print(event.keysym)
-		current_list = [[5,28], [13,14], [25,5]]
+		if event.keysym == 'Return':
+			current_list = [[5,28], [13,14], [25,5]]
 
-		cmd_2d = 'BLSET2DCURRENT ' + str(current_list[self.enter_counter][0]) + '\r\n'
-		cmd_3d = 'BLSET3DCURRENT ' + str(current_list[self.enter_counter][1]) + '\r\n'
-		self.S.write(cmd_2d.encode())
-		j = self.recv()
-		self.check_json_ret(j)
-		self.S.write(cmd_3d.encode())
-		j = self.recv()
-		self.check_json_ret(j)
-		self.sended_cmd.set("已发送命令设置2D电流 %dma， 3D电流 %dma" % (current_list[self.enter_counter][0], current_list[self.enter_counter][1]))
-		self.enter_counter += 1
-		if self.enter_counter == 3:
-			self.enter_counter = 0
-		self.current_cmd.set("回车将设置2D电流 %dma， 3D电流 %dma" % (current_list[self.enter_counter][0], current_list[self.enter_counter][1]))
-
+			cmd_2d = 'BLSET2DCURRENT ' + str(current_list[self.enter_counter][0]) + '\r\n'
+			cmd_3d = 'BLSET3DCURRENT ' + str(current_list[self.enter_counter][1]) + '\r\n'
+			self.S.write(cmd_2d.encode())
+			j = self.recv()
+			self.check_json_ret(j)
+			self.S.write(cmd_3d.encode())
+			j = self.recv()
+			self.check_json_ret(j)
+			self.sended_cmd.set("已发送命令设置2D电流 %dma， 3D电流 %dma" % (current_list[self.enter_counter][0], current_list[self.enter_counter][1]))
+			self.enter_counter += 1
+			if self.enter_counter == 3:
+				self.enter_counter = 0
+			self.current_cmd.set("回车将设置2D电流 %dma， 3D电流 %dma" % (current_list[self.enter_counter][0], current_list[self.enter_counter][1]))
+		
+		if event.keysym == 'space':
+			#self.S.close()
+			self.BackLightSerial()
+			
 	def BackLightSerial(self):
 		plist = list(serial.tools.list_ports.comports())
 		serialName = []
@@ -511,6 +664,7 @@ class BackLightTest:
 			try:
 				self.S = serial.Serial(serialName,115200,timeout = 0.5)
 				self.var.set(serialName + " 连接成功.")
+				print("serial %s is connect" % serialName)
 			except:
 				self.var.set("串口连接失败")
 				print("Serial Port Fail.")
